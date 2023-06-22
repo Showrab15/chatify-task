@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase/firebase.config";
+import { toast } from "react-toastify";
 
 const Login = () => {
-  const [err, setErr] = useState(false);
+  const [err, setErr] = useState('');
   const navigate = useNavigate();
-
+const emailRef = useRef()
   const handleSubmit = async (e) => {
     e.preventDefault();
     const email = e.target[0].value;
@@ -15,22 +16,43 @@ const Login = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate("/")
+      toast('Login Successfully completed');
+
     } catch (err) {
-      setErr(true);
+      setErr(err.message);
     }
   };
+
+
+
+  const handleResetPassword =(event)=>{
+const email = emailRef.current.value;
+console.log(email);
+if(!email){
+  toast.error('Please Provide Your Email Address for reset the password');
+  return
+}
+sendPasswordResetEmail(auth, email)
+.then(()=>{
+  toast('please check your email')
+})
+.catch(error=>{
+  setErr(error.message)
+})
+  }
   return (
     <div className="formContainer">
       <div className="formWrapper">
-        <span className="logo">Chatify </span>
+        <span style={{color: 'green'}} className="logo">Chatify </span>
         <span className="title">Login</span>
         <form onSubmit={handleSubmit}>
-          <input type="email" placeholder="email" />
-          <input type="password" placeholder="password" />
-          <button>Sign in</button>
-          {err && <span>Something went wrong</span>}
+        <input required type="email" ref={emailRef} placeholder="Type Your Email" />
+          <input required type="password" placeholder="Type Your password" />
+          <button style={{backgroundColor: 'green', borderRadius: "8px", cursor: "pointer"}}>Sign in</button>
+          {err && <span style={{color: 'red'}}>{err}</span>}
         </form>
-        <p>You don't have an account? <Link to="/register">Register</Link></p>
+        <p style={{fontSize: "18px", fontWeight: '600'}}> <small>Forgot password ? <Link onClick={handleResetPassword}>  Reset Your Password</Link></small></p>
+        <p  style={{fontSize: "18px", fontWeight: '600'}}>You don't have an account? <Link to="/register">Register</Link></p>
       </div>
     </div>
   );
